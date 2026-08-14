@@ -41,7 +41,8 @@
     "types",
     "README.md",
     "README.zh-CN.md",
-    "LICENSE"
+    "LICENSE",
+    "cordis.patch.yml"
   ],
   "scripts": {
     "test": "node --test",
@@ -85,5 +86,10 @@
       "optional": true
     }
   },
-  "author": "TsFreddie"
+  "author": "TsFreddie",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
 }

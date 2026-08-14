@@ -124,6 +124,8 @@ dsh plugin --profile web add dsh-compaction-instant
 
 AI 会用 `agentPresets.copy('standard', '<id>')` 创建本地撰写的 preset，在副本中替换压缩行的 `name`，用 `standingKeyFor('<id>')` 做挂载校验，并可通过修改 `agent-presets` 行（`config.default: <id>`）设为默认。新 preset 会出现在 UI 选择器中；内置 preset 不受影响。
 
+自 v0.1.1 起本包还声明了 `dsh.bundle`，因此直接安装会自动注册为 **profile 层**：内置摘要行被禁用，即时引擎与 recall 工具自动插入宿主侧（见包内 `cordis.patch.yml`）。宿主无需手动 patch；只需复制 preset。
+
 ### 方法 3 —— 直接安装 + 手动配置 preset
 
 ```bash
@@ -156,7 +158,7 @@ cp <built-in-preset>/agent.cordis.yml "$DSH_HOME/.agent-presets/<id>/agent.cordi
 
 ### 共享 patch 层（所有方法通用）
 
-recall 工具与 `/recall` 命令是宿主级行；把它们加进 profile 的 `cordis.patch.yml`（新行必须挂在 `insert` 列表下；文件热重载，无需重启）：
+recall 工具与 `/recall` 命令是宿主级行；把它们加进 profile 的 `cordis.patch.yml`（新行必须挂在 `insert` 列表下；文件热重载，无需重启）。别名安装（**方法 1**）还需要用同样的方式加引擎行——该安装方式不会被识别为 bundle（见包内 `cordis.patch.yml` 的说明）：
 
 ```yaml
 - id: compaction-basic

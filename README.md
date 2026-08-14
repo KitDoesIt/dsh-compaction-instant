@@ -126,6 +126,8 @@ Then open a session with the preset-authoring preset (the shipped `cordis` prese
 
 The AI uses `agentPresets.copy('standard', '<id>')` to create a locally authored preset, swaps the compaction row's `name` in the copy, mount-validates it with `standingKeyFor('<id>')`, and can set it as the default by patching the `agent-presets` row (`config.default: <id>`). The new preset appears in the UI picker; the built-in presets stay untouched.
 
+Since v0.1.1 the package also declares `dsh.bundle`, so the direct install registers itself as a **profile layer automatically**: the built-in summarizer row is disabled and the instant engine + recall tools are inserted host-side (see `cordis.patch.yml` in the package). No manual patch rows needed for the host; only the preset copy above.
+
 ### Method 3 — Direct install + manual preset configuration
 
 ```bash
@@ -158,7 +160,7 @@ Rules: never edit the shipped preset install; keep the isolate realm; a successf
 
 ### Shared patch layer (all methods)
 
-The recall tools and `/recall` command are host-level rows; add them to the profile's `cordis.patch.yml` (new rows must ride an `insert` list; the file is hot-reloaded, no restart needed):
+The recall tools and `/recall` command are host-level rows; add them to the profile's `cordis.patch.yml` (new rows must ride an `insert` list; the file is hot-reloaded, no restart needed). The alias install (**Method 1**) needs this for the engine row too — that install is not recognized as a bundle (see the `cordis.patch.yml` notes in the package):
 
 ```yaml
 - id: compaction-basic

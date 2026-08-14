@@ -1,0 +1,26 @@
+# The dsh-compaction-instant bundle patch: this package declares
+# `dsh.bundle` in package.json, so installing it with `dsh plugin add` makes
+# it a profile layer automatically. This patch disables the built-in
+# summarizer row (one `ctx.compaction` implementation per context) and
+# inserts the instant engine plus the recall tools as host-level rows.
+#
+# Notes:
+# - Row names target the direct-install layout (`dsh-compaction-instant`).
+# - The alias install method (`@deepseek-ai/dsh-compaction-basic@npm:...`)
+#   is NOT recognized as a bundle: the harness resolves that package name
+#   from its own installation (the real basic, which declares no
+#   `dsh.bundle`), so the alias install never joins the layer stack. Those
+#   installs keep using the manual patch below — see README "Shared patch
+#   layer (all methods)".
+# - The user's profile patch is applied after this bundle, so per-profile
+#   overrides of these rows still win.
+
+- id: compaction-basic
+  disabled: true
+- insert:
+    - id: compaction-instant
+      name: dsh-compaction-instant
+    - id: tool-recall
+      name: dsh-compaction-instant/tool
+    - id: command-recall
+      name: dsh-compaction-instant/command
