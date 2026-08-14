@@ -6,6 +6,13 @@ Instant, near-lossless context compaction for [DeepSeek Harness](https://github.
 
 A compaction compresses a shadowed history span in **milliseconds, with zero model calls**, keeping **original tokens only** — no paraphrase, no hallucination, no summarizer cost. Everything that is cut is still recoverable through `(seq N)` pointers into the durable session log.
 
+## Key features
+
+- **LLM-free** — compaction never invokes a model. No summarizer prompt, no inference latency, no token spend; the compile is deterministic text processing, so a million-token history compresses in milliseconds.
+- **Near-lossless** — output contains only original tokens; every cut is marked and points at its durable `seq`, and prior checkpoints are copied verbatim.
+- **Instant** — a single deterministic pass over the shadowed nodes; no network, no model, no KV-cache concerns.
+- **Contract-exact drop-in** — same seam, events, provenance and failure vocabulary as `compaction-basic`; every built-in preset loads it unchanged (alias install).
+
 ## Example
 
 A region containing a user request, an assistant text + tool call, and its result compiles to:
