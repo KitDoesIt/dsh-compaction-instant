@@ -121,6 +121,20 @@ dsh plugin --profile web add "@deepseek-ai/dsh-compaction-basic@npm:dsh-compacti
 
 The masquerade is safe by construction: this engine is a contract-exact drop-in — the same `ctx.compaction` seam, the **identical inject list** (`llm`, `tokenMeter`, `sessions`), the same event protocol and error vocabulary, and its `Config` accepts every key of basic's configuration surface. Removing the alias dependency restores the real basic.
 
+This install is **not** recognized as a bundle (the harness resolves the name `@deepseek-ai/dsh-compaction-basic` from its own installation, which declares no `dsh.bundle`), so nothing is automatic — add the recall tools and `/recall` command to the profile's `cordis.patch.yml` yourself (new rows ride an `insert` list; the file hot-reloads, no restart needed). Row names must use the **alias package name**, the only one resolvable in this install; the engine row is optional, needed only as a host fallback for presets without compaction (e.g. `minimal`):
+
+```yaml
+- id: compaction-basic
+  disabled: true                     # host-level swap (optional fallback)
+- insert:
+    - id: compaction-instant
+      name: '@deepseek-ai/dsh-compaction-basic'   # host fallback for presets without compaction
+    - id: tool-recall
+      name: '@deepseek-ai/dsh-compaction-basic/tool'
+    - id: command-recall
+      name: '@deepseek-ai/dsh-compaction-basic/command'
+```
+
 ### Method 2 — Direct install + AI-authored preset copy (dsh authoring mode)
 
 ```bash
@@ -165,30 +179,12 @@ Then hand-edit the copy's compaction group — one row name change, inside the s
 
 Rules: never edit the shipped preset install; keep the isolate realm; a successful `standingKeyFor` mount (or simply starting a session on the preset) is the real validation — the roster's `broken` flag only catches parse errors.
 
-### Host-level rows
-
-The recall tools and `/recall` command are host-level rows; add them to the profile's `cordis.patch.yml` (new rows must ride an `insert` list; the file is hot-reloaded, no restart needed). The engine row itself is **only** needed as a host fallback for presets without compaction (e.g. `minimal`).
-
-**Method 1 (alias install)** — required, and the row names must use the **alias package name** (`@deepseek-ai/dsh-compaction-basic`), which is the only name resolvable in that install. The alias install is not recognized as a bundle, so nothing is automatic:
-
-```yaml
-- id: compaction-basic
-  disabled: true                     # host-level swap (optional fallback)
-- insert:
-    - id: compaction-instant
-      name: '@deepseek-ai/dsh-compaction-basic'   # host fallback for presets without compaction
-    - id: tool-recall
-      name: '@deepseek-ai/dsh-compaction-basic/tool'
-    - id: command-recall
-      name: '@deepseek-ai/dsh-compaction-basic/command'
-```
-
-**Method 2 / 3 (direct install)** — nothing to do: since v0.1.1 the package's `dsh.bundle` registers these rows automatically (the engine row under the package's own name). Only the preset copy itself is manual.
+No host-level rows are needed for Methods 2 and 3: the `dsh.bundle` mentioned above registers everything automatically.
 
 | Method | Engine in built-in presets | Touches preset files | Extra preset in picker | Setup effort |
 |---|---|---|---|---|
-| **1. Alias replace** | ✅ automatic (standard/code/cordis) | no | no | one command |
-| **2. AI-authored copy** | only the new preset | the copy | yes | one prompt + patch |
+| **1. Alias replace** | ✅ automatic (standard/code/cordis) | no | no | one command + patch rows |
+| **2. AI-authored copy** | only the new preset | the copy | yes | one prompt |
 | **3. Manual preset** | only the new preset | the copy | yes | manual edit |
 
 > Only one `ctx.compaction` implementation may be mounted per context (the seam documents "load one implementation per context"); preset mounts keep their own isolate realm, so host and preset instances never collide.

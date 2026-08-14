@@ -119,6 +119,20 @@ dsh plugin --profile web add "@deepseek-ai/dsh-compaction-basic@npm:dsh-compacti
 
 这样顶替是天然安全的：本引擎和官方引擎对外完全兼容——同一个 `ctx.compaction` 接口、**完全相同的依赖注入列表**（`llm`、`tokenMeter`、`sessions`）、相同的事件和报错方式，官方配置里的每一个键也都接受。把别名依赖删掉就恢复官方的引擎。
 
+这种安装方式**不会被识别成 bundle**（Harness 会从自己的安装目录解析 `@deepseek-ai/dsh-compaction-basic` 这个名字，那里是官方包，没有 `dsh.bundle` 声明），所以没有任何自动化——需要把 recall 工具和 `/recall` 命令自己加进 profile 的 `cordis.patch.yml`（新行必须放在 `insert` 列表里；这个文件热重载，不用重启）。行名必须用**别名包名**（这种安装方式下只有它能解析）；引擎行可选，只在需要给"没有压缩配置的预设"（如 `minimal`）提供宿主兜底时才加：
+
+```yaml
+- id: compaction-basic
+  disabled: true                     # 宿主层替换（可选兜底）
+- insert:
+    - id: compaction-instant
+      name: '@deepseek-ai/dsh-compaction-basic'   # 给没有压缩配置的预设兜底
+    - id: tool-recall
+      name: '@deepseek-ai/dsh-compaction-basic/tool'
+    - id: command-recall
+      name: '@deepseek-ai/dsh-compaction-basic/command'
+```
+
 ### 方法 2 —— 直接安装 + 让 AI 复制一份预设（dsh 创作模式）
 
 ```bash
@@ -163,30 +177,12 @@ cp <built-in-preset>/agent.cordis.yml "$DSH_HOME/.agent-presets/<id>/agent.cordi
 
 规则：绝不改内置预设的安装文件；保留 isolate 隔离域；真正的检验是 `standingKeyFor` 挂载成功（或直接在预设上开一个会话）——预设列表里的 `broken` 标记只能发现解析错误。
 
-### 宿主层的配置行
-
-recall 工具和 `/recall` 命令是宿主层（主程序）的配置行，需要加进 profile 的 `cordis.patch.yml`（新行必须放在 `insert` 列表里；这个文件热重载，不用重启）。引擎行**只有**在需要给"没有压缩配置的预设"（如 `minimal`）提供宿主兜底时才需要加。
-
-**方法 1（别名安装）**——必须手动加，而且行名必须用**别名包名**（`@deepseek-ai/dsh-compaction-basic`，这种安装方式下只有这个名字能解析）。别名安装不会被识别成 bundle，所以没有任何自动化：
-
-```yaml
-- id: compaction-basic
-  disabled: true                     # 宿主层替换（可选兜底）
-- insert:
-    - id: compaction-instant
-      name: '@deepseek-ai/dsh-compaction-basic'   # 给没有压缩配置的预设兜底
-    - id: tool-recall
-      name: '@deepseek-ai/dsh-compaction-basic/tool'
-    - id: command-recall
-      name: '@deepseek-ai/dsh-compaction-basic/command'
-```
-
-**方法 2 / 3（直接安装）**——什么都不用做：v0.1.1 起包的 `dsh.bundle` 会自动注册这些行（引擎行用包自己的名字）。只需手动复制预设。
+方法 2 和 3 **不需要任何宿主配置行**：上面提到的 `dsh.bundle` 会自动注册好一切。
 
 | 方法 | 内置预设里的引擎 | 要改预设文件吗 | 选择器里多出预设 | 安装成本 |
 |---|---|---|---|---|
-| **1. 别名替换** | ✅ 自动（standard/code/cordis） | 否 | 否 | 一条命令 |
-| **2. AI 复制副本** | 只有新预设 | 副本 | 是 | 一句提示 + patch |
+| **1. 别名替换** | ✅ 自动（standard/code/cordis） | 否 | 否 | 一条命令 + 手动 patch |
+| **2. AI 复制副本** | 只有新预设 | 副本 | 是 | 一句提示 |
 | **3. 手动预设** | 只有新预设 | 副本 | 是 | 手动编辑 |
 
 > 每个上下文只能挂载一个 `ctx.compaction` 实现（接口文档写明"每个上下文加载一个实现"）；预设挂载各自有独立的隔离域，所以宿主和预设的实例永远不会冲突。
