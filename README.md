@@ -79,6 +79,21 @@ The tool and command plugins each take their own `{ maxRecallTokens?: 16000, max
 
 Budgets are enforced twice — by token count and by a `budget × 4` character ceiling — so pathological unbroken runs (base64 blobs, minified files) cannot bypass them. Tool calls are **always one line**: they are never rescaled, and the cap loop shrinks only the conversation-text budgets (floor **32 tokens** each). If the compiled region still exceeds the (scaled) cap, the oldest **tool rows** are removed first (`[N tool/result entries elided: seqs a-b]`), and only then the oldest remaining entries (`[N earlier entries elided: seqs a-b]`) — tool calls can never squeeze the dialogue out. The newest content always survives.
 
+### Browser settings card (Settings → Plugins)
+
+Since 0.1.4 the engine exposes a **user-owned settings namespace** (`compaction-instant`) on every deployment that composes the settings domain (the standard web/desktop profiles do). The editable subset, persisted to `settings.yaml` and layered **over** the plugin row's cordis config:
+
+| Field | Meaning |
+|---|---|
+| `checkpointScale` | Checkpoint budget = shadowed tokens × this ratio |
+| `checkpointCap` | Absolute ceiling of the scaled budget |
+| `maxTokens` | Total compiler-token cap for one checkpoint |
+| `auto` | Register automatic between-step compaction |
+| `debug` | Write engine debug lines to the log file |
+| `debugLogPath` | Debug log path (empty = `$DSH_HOME/compaction-debug.log`) |
+
+Everything else (`modelPolicies`, `toolArgTools`, …) stays cordis-config-only. The settings layer never breaks the engine: every settings write is re-validated by the full config resolver before it is persisted, and non-exposed entry fields keep their composed values. Without a settings service the engine behaves exactly as before (composition entry only). The card is registered on the client bundle, so it appears without touching any deployment config beyond installing the package — restart `dsh web` once so the boot graph picks up the `dsh.client` bundle.
+
 ### Tokenizer and multilingual behavior
 
 The tokenizer is a character-class heuristic: ASCII letter runs and digit runs count as one token each, punctuation is per-character, whitespace is free, and every other code unit is its own token. Concretely:

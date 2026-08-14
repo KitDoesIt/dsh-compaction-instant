@@ -77,6 +77,21 @@ recall 工具和命令插件各自接受 `{ maxRecallTokens?: 16000, maxSearchHi
 
 预算有两道保险：按 token 数限制，再按"预算 × 4"的字符数限制——所以再长的连续字符串（base64 大块、压缩过的文件）也绕不过去。工具调用**永远是单行**：不会缩放，预算不够时只压缩对话文本（每条最少留 **32 token**）。如果压缩结果还是超过（缩放后的）预算，先删最旧的**工具行**（`[N tool/result entries elided: seqs a-b]`），再删其余最旧的条目（`[N earlier entries elided: seqs a-b]`）——工具调用永远挤不掉对话。最新的内容总能保住。
 
+### 浏览器设置卡片（设置 → 插件）
+
+从 0.1.4 起，引擎在**任何装配了 settings 域**的部署（标准 web/desktop profile 都有）上暴露一个用户设置命名空间（`compaction-instant`）。可编辑子集持久化到 `settings.yaml`，**叠加在**插件行的 cordis 配置之上：
+
+| 字段 | 含义 |
+|---|---|
+| `checkpointScale` | 压缩预算 = 被压缩 token 数 × 此比例 |
+| `checkpointCap` | 缩放后预算的绝对封顶 |
+| `maxTokens` | 一次编译检查点的总 token 上限 |
+| `auto` | 注册步骤间自动压缩 |
+| `debug` | 向日志文件写入引擎调试行 |
+| `debugLogPath` | 调试日志路径（留空 = `$DSH_HOME/compaction-debug.log`） |
+
+其余字段（`modelPolicies`、`toolArgTools` 等）仍只由 cordis 配置管理。设置层永远弄不坏引擎：每次设置写入都会先经过完整配置解析器的重新校验才会持久化；未暴露的配置字段保持组合层的值。没有 settings 服务时引擎行为与之前完全一致（只看组合配置）。卡片注册在客户端 bundle 上，所以只要装上这个包就会出现，无需改任何部署配置——**重启一次 `dsh web`** 让启动图拾取 `dsh.client` bundle 即可。
+
 ### 分词与多语言
 
 分词器是简单的字符规则：连续的英文字母算一个 token，连续数字算一个，标点一个字符一个，空格免费，其他每个字符算一个。具体：

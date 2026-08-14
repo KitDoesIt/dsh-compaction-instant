@@ -15,6 +15,7 @@
 import z from "@deepseek-ai/schemastery";
 import { appendFileSync } from "node:fs";
 import { CompactionEngine, ManualCompactionError } from "@deepseek-ai/dsh-compaction";
+import { installSettingsSection, settingsNamespace } from "@deepseek-ai/dsh-settings";
 import { CONTEXT_WINDOW_EXCEEDED_CODE, assertNever, deepFreeze } from "@deepseek-ai/dsh-llm";
 import { compileNoisePatterns, compileRegion, COMPILER_REV, DEFAULT_ARG_TOOLS, DEFAULT_NOISE_PATTERNS, isCheckpointSource } from "./compiler.js";
 import { assertNoActiveCompaction, compactSurfaceRegion, selectCompactableRange } from "./region.js";
@@ -102,6 +103,21 @@ export class TargetPressureConfigError extends Error {
     super(message);
     this.targetKey = targetKey;
   }
+}
+
+/**
+ * Pick the settings-exposed subset out of a composition entry config, so the
+ * namespace's `base` layer carries exactly the fields its schema declares.
+ */
+function pickSettingsFields(config) {
+  return {
+    ...config.checkpointScale !== undefined ? { checkpointScale: config.checkpointScale } : {},
+    ...config.checkpointCap !== undefined ? { checkpointCap: config.checkpointCap } : {},
+    ...config.maxTokens !== undefined ? { maxTokens: config.maxTokens } : {},
+    ...config.auto !== undefined ? { auto: config.auto } : {},
+    ...config.debug !== undefined ? { debug: config.debug } : {},
+    ...config.debugLogPath !== undefined ? { debugLogPath: config.debugLogPath } : {}
+  };
 }
 
 /**
@@ -457,6 +473,23 @@ export class InstantCompactionEngine extends CompactionEngine {
     debug: z.boolean(),
     debugLogPath: z.string()
   });
+  /** Settings namespace for user-owned instant-compaction preferences. */
+  static SETTINGS_NAMESPACE = settingsNamespace("compaction-instant");
+  /**
+   * Settings-exposed subset of the engine configuration. Defaults mirror the
+   * engine's own `DEFAULT_*` constants so the resolved settings layer is
+   * exactly what `resolveConfig` would compute; `debug`/`debugLogPath` stay
+   * optional because their engine defaults depend on the environment
+   * (`DSH_COMPACTION_DEBUG`, `DSH_HOME`).
+   */
+  static SETTINGS_SCHEMA = z.object({
+    checkpointScale: z.number().min(0).max(1).default(DEFAULT_CHECKPOINT_SCALE),
+    checkpointCap: z.number().step(1).min(1).default(DEFAULT_CHECKPOINT_CAP),
+    maxTokens: z.number().step(1).min(1).default(DEFAULT_MAX_TOKENS),
+    auto: z.boolean().default(true),
+    debug: z.boolean(),
+    debugLogPath: z.string()
+  });
   /** Resolved and validated compaction configuration. */
   config;
   warnedPressureConfigTargets = new Set();
@@ -470,6 +503,7 @@ export class InstantCompactionEngine extends CompactionEngine {
     engineDebug(this.config, `constructed rev=${COMPILER_REV} debugLog=${this.config.debugLogPath} argTools=[${this.config.toolArgTools.join(",")}] hideTools=[${this.config.hideTools.join(",")}]`);
     this._autoDisposer = null;
     this._autoActive = false;
+    this._installSettingsSection(ctx);
     this._syncAuto();
   }
   /**
@@ -482,6 +516,33 @@ export class InstantCompactionEngine extends CompactionEngine {
     this.config = resolveConfig(raw);
     this._syncAuto();
     engineDebug(this.config, `config reloaded rev=${COMPILER_REV} source=${this.source ? "settings" : "entry"} argTools=[${this.config.toolArgTools.join(",")}] auto=${this.config.auto}`);
+  }
+  /**
+   * Mount the optional settings namespace over this engine's configuration
+   * source. With a settings service present, the user layer (settings.yaml)
+   * overlays the composition entry's exposed subset; without one, the engine
+   * keeps reading the entry exactly as composed. The whole engine validation
+   * runs on every settings write, so a value that would break the engine is
+   * refused before it is persisted.
+   */
+  _installSettingsSection(ctx) {
+    const entry = this.entry;
+    installSettingsSection(ctx, InstantCompactionEngine.SETTINGS_NAMESPACE, InstantCompactionEngine.SETTINGS_SCHEMA, pickSettingsFields(entry), {
+      validate: (value) => {
+        // Full validation over the entry with the settings layer applied:
+        // settings values are only accepted when the merged config is sound.
+        resolveConfig({ ...entry, ...value });
+      },
+      setSource: (next) => {
+        // The settings layer resolves only the exposed subset, so non-exposed
+        // entry fields (modelPolicies, toolArgTools, ...) must survive the
+        // swap; merge them under the settings layer.
+        this.source = () => ({ ...entry, ...next() });
+      },
+      onChange: () => {
+        this._reloadConfig();
+      }
+    });
   }
   /** Register or dispose the automatic-compaction listeners with the `auto` flag. */
   _syncAuto() {
