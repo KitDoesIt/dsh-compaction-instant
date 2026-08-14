@@ -91,5 +91,13 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KitDoesIt/dsh-compaction-instant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KitDoesIt/dsh-compaction-instant/issues"
+  },
+  "homepage": "https://github.com/KitDoesIt/dsh-compaction-instant#readme"
 }
