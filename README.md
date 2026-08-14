@@ -101,6 +101,34 @@ The harness token meter (used for the shrink guarantee and `/compact` reporting)
 - **Contract-exact drop-in** — identical seam, events, provenance, pricing (via the singleton `ctx.tokenMeter`), and failure vocabulary as `compaction-basic`, including the shrink guarantee (a checkpoint that would not reduce the surface is rejected).
 - **Optional pruner compatible** — consumes the optional `toolResultPruner` service exactly like basic (it helps the *retained tail*; the compiler collapses the *shadowed* region).
 
+## Measured compression (real sessions, no drops)
+
+Rates measured on real session logs (this project's own development sessions), compiled **without dropping a single entry** — every row survives, only per-entry truncation and one-line tool rows apply. Percentages are of the original token count.
+
+| Load | Raw tokens | Compiled | Retained | Compressed |
+|---|---|---|---|---|
+| Tool-dense session, full (3,181 nodes: 1,438 tool calls + 1,540 results) | 2,523,012 | 226,205 | **9.0%** | 91.0% |
+| Another session, full (864 nodes) | 685,088 | 62,705 | **9.2%** | 90.8% |
+| Same tool-dense session, recent 800 messages | 625,927 | 45,031 | **7.2%** | 92.8% |
+| Pure text only (same session minus all tool rows) | 160,963 | 109,945 | **68.3%** | 31.7% |
+
+Where the ratio comes from (no drops):
+
+- **Tool results cost nothing** — results never produce entries; the `-> result N` pointer keeps each one one `recall` away. That is the biggest win.
+- **Tool calls are one line** — each call collapses to a single row (≤ 128 tokens; ~100 on average).
+- **Reasoning text is not retained** — reasoning deltas are elided entirely (marked, never silent).
+- **Conversation text is nearly lossless** — the pure-text control retained 68.3%; the ~1.5x on text is mostly JSON wrapper stripping plus truncation of only the longest blocks.
+
+Budget scan (same 2.5M-token tool-dense session): dropping starts at a cap of ~226K tokens (9% of the raw size — close to the default `checkpointScale` of 0.1, but the 32K hard cap cuts it short). Below that the cost is a cliff, not a slope:
+
+| Cap | Compiled | Retained | Entries | Dropped |
+|---|---|---|---|---|
+| 8,192 | 8,243 | 0.33% | 111 | 2,090 |
+| 32,768 (deployment default) | 22,263 | 0.88% | 232 | 1,969 |
+| 65,536 | 55,737 | 2.2% | 325 | 1,876 |
+| 131,072 | 131,047 | 5.2% | 1,142 | 1,058 |
+| 226,205 (no-drop threshold) | 226,205 | 9.0% | 2,199 | 0 |
+
 ## Installation
 
 All three methods below install the package (published to npm as `dsh-compaction-instant`) with the harness's own plugin manager (which runs pnpm inside the profile directory, making the package resolvable to both the host composition and every agent preset):
