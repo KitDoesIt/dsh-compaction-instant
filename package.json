@@ -1,6 +1,6 @@
 {
   "name": "dsh-compaction-instant",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "VCC-style instant, near-lossless deterministic compaction engine for the DeepSeek Harness — a drop-in replacement for @deepseek-ai/dsh-compaction-basic",
   "type": "module",
   "main": "src/index.js",
