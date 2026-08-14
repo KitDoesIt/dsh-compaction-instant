@@ -158,21 +158,25 @@ Then hand-edit the copy's compaction group — one row name change, inside the s
 
 Rules: never edit the shipped preset install; keep the isolate realm; a successful `standingKeyFor` mount (or simply starting a session on the preset) is the real validation — the roster's `broken` flag only catches parse errors.
 
-### Shared patch layer (all methods)
+### Host-level rows
 
-The recall tools and `/recall` command are host-level rows; add them to the profile's `cordis.patch.yml` (new rows must ride an `insert` list; the file is hot-reloaded, no restart needed). The alias install (**Method 1**) needs this for the engine row too — that install is not recognized as a bundle (see the `cordis.patch.yml` notes in the package):
+The recall tools and `/recall` command are host-level rows; add them to the profile's `cordis.patch.yml` (new rows must ride an `insert` list; the file is hot-reloaded, no restart needed). The engine row itself is **only** needed as a host fallback for presets without compaction (e.g. `minimal`).
+
+**Method 1 (alias install)** — required, and the row names must use the **alias package name** (`@deepseek-ai/dsh-compaction-basic`), which is the only name resolvable in that install. The alias install is not recognized as a bundle, so nothing is automatic:
 
 ```yaml
 - id: compaction-basic
   disabled: true                     # host-level swap (optional fallback)
 - insert:
     - id: compaction-instant
-      name: dsh-compaction-instant   # host fallback for presets without compaction (e.g. minimal)
+      name: '@deepseek-ai/dsh-compaction-basic'   # host fallback for presets without compaction
     - id: tool-recall
-      name: dsh-compaction-instant/tool
+      name: '@deepseek-ai/dsh-compaction-basic/tool'
     - id: command-recall
-      name: dsh-compaction-instant/command
+      name: '@deepseek-ai/dsh-compaction-basic/command'
 ```
+
+**Method 2 / 3 (direct install)** — nothing to do: since v0.1.1 the package's `dsh.bundle` registers these rows automatically (the engine row under the package's own name). Only the preset copy itself is manual.
 
 | Method | Engine in built-in presets | Touches preset files | Extra preset in picker | Setup effort |
 |---|---|---|---|---|

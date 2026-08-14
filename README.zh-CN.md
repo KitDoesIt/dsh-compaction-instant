@@ -156,21 +156,25 @@ cp <built-in-preset>/agent.cordis.yml "$DSH_HOME/.agent-presets/<id>/agent.cordi
 
 规则：绝不编辑内置 preset 安装；保留 isolate realm；成功的 `standingKeyFor` 挂载（或直接在 preset 上开一个会话）才是真正的校验——名册的 `broken` 标志只能捕捉解析错误。
 
-### 共享 patch 层（所有方法通用）
+### 宿主级行
 
-recall 工具与 `/recall` 命令是宿主级行；把它们加进 profile 的 `cordis.patch.yml`（新行必须挂在 `insert` 列表下；文件热重载，无需重启）。别名安装（**方法 1**）还需要用同样的方式加引擎行——该安装方式不会被识别为 bundle（见包内 `cordis.patch.yml` 的说明）：
+recall 工具与 `/recall` 命令是宿主级行；把它们加进 profile 的 `cordis.patch.yml`（新行必须挂在 `insert` 列表下；文件热重载，无需重启）。引擎行本身**只在**需要为无压缩 preset（如 `minimal`）提供宿主回退时才加。
+
+**方法 1（别名安装）**——必须手动加，且行名必须用**别名包名**（`@deepseek-ai/dsh-compaction-basic`，该安装下唯一可解析的名字）。别名安装不会被识别为 bundle，没有任何自动化：
 
 ```yaml
 - id: compaction-basic
   disabled: true                     # 宿主级替换（可选回退）
 - insert:
     - id: compaction-instant
-      name: dsh-compaction-instant   # 无压缩 preset（如 minimal）的宿主回退
+      name: '@deepseek-ai/dsh-compaction-basic'   # 无压缩 preset 的宿主回退
     - id: tool-recall
-      name: dsh-compaction-instant/tool
+      name: '@deepseek-ai/dsh-compaction-basic/tool'
     - id: command-recall
-      name: dsh-compaction-instant/command
+      name: '@deepseek-ai/dsh-compaction-basic/command'
 ```
+
+**方法 2 / 3（直接安装）**——无需操作：自 v0.1.1 起包的 `dsh.bundle` 会自动注册这些行（引擎行用包自身的名字）。只需手动复制 preset。
 
 | 方法 | 内置 preset 中的引擎 | 触碰 preset 文件 | 选择器中多出 preset | 设置成本 |
 |---|---|---|---|---|
