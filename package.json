@@ -1,0 +1,89 @@
+{
+  "name": "dsh-compaction-instant",
+  "version": "0.1.0",
+  "description": "VCC-style instant, near-lossless deterministic compaction engine for the DeepSeek Harness — a drop-in replacement for @deepseek-ai/dsh-compaction-basic",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./compiler": {
+      "types": "./types/compiler.d.ts",
+      "default": "./src/compiler.js"
+    },
+    "./region": {
+      "types": "./types/region.d.ts",
+      "default": "./src/region.js"
+    },
+    "./recall": {
+      "types": "./types/recall.d.ts",
+      "default": "./src/recall.js"
+    },
+    "./search": {
+      "types": "./types/search.d.ts",
+      "default": "./src/search.js"
+    },
+    "./tool": {
+      "types": "./types/tool.d.ts",
+      "default": "./src/tool.js"
+    },
+    "./command": {
+      "types": "./types/command.d.ts",
+      "default": "./src/command.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "types",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/compiler.js && node --check src/region.js && node --check src/recall.js && node --check src/search.js && node --check src/tool.js && node --check src/command.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "cordis",
+    "dsh",
+    "deepseek-harness",
+    "compaction",
+    "context-compression",
+    "vcc",
+    "token"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-compaction": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-token-meter": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-commands": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-compaction-tool-result-pruner": "^0.1.0-rc.6"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-compaction-tool-result-pruner": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-commands": {
+      "optional": true
+    }
+  },
+  "author": "TsFreddie"
+}
