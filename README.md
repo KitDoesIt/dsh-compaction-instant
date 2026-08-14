@@ -58,7 +58,7 @@ All fields optional; defaults shown.
 | `auto` | `true` | Register `agent/pre-step` pressure and `agent/request-error` overflow recovery |
 | `maxTokens` | `8192` | Floor of the total cap for one compiled checkpoint (density-aware tokens) |
 | `checkpointScale` | `0.1` | The effective cap is `max(maxTokens, shadowed × checkpointScale)`, ceilinged at `checkpointCap` — a large span never crushes every entry into a sliver |
-| `checkpointCap` | `32768` | Absolute ceiling of the scaled checkpoint cap |
+| `checkpointCap` | `65536` | Absolute ceiling of the scaled checkpoint cap |
 | `textTokens` | `512` | Budget per assistant text block |
 | `userTextTokens` | `1024` | Budget per user text block |
 | `toolCallTokens` | `128` | Budget per tool-call one-liner (never rescaled — see the elision rules) |
@@ -119,12 +119,13 @@ Where the ratio comes from (no drops):
 - **Reasoning text is not retained** — reasoning deltas are elided entirely (marked, never silent).
 - **Conversation text is nearly lossless** — the pure-text control retained 68.3%; the ~1.5x on text is mostly JSON wrapper stripping plus truncation of only the longest blocks.
 
-Budget scan (same 2.5M-token tool-dense session): dropping starts at a cap of ~226K tokens (9% of the raw size — close to the default `checkpointScale` of 0.1, but the 32K hard cap cuts it short). Below that the cost is a cliff, not a slope:
+Budget scan (same 2.5M-token tool-dense session): dropping starts at a cap of ~226K tokens (9% of the raw size — close to the default `checkpointScale` of 0.1, but the 64K hard cap cuts it short). Below that the cost is a cliff, not a slope:
 
 | Cap | Compiled | Retained | Entries | Dropped |
 |---|---|---|---|---|
 | 8,192 | 8,243 | 0.33% | 111 | 2,090 |
-| 32,768 (deployment default) | 22,263 | 0.88% | 232 | 1,969 |
+| 32,768 | 22,263 | 0.88% | 232 | 1,969 |
+| 65,536 (deployment default) | 55,737 | 2.2% | 325 | 1,876 |
 | 65,536 | 55,737 | 2.2% | 325 | 1,876 |
 | 131,072 | 131,047 | 5.2% | 1,142 | 1,058 |
 | 226,205 (no-drop threshold) | 226,205 | 9.0% | 2,199 | 0 |

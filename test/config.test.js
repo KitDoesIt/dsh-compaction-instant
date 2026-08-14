@@ -16,7 +16,7 @@ test("resolveConfig applies the documented defaults", () => {
   assert.equal(config.manualRetainTokens, undefined);
   assert.equal(config.maxTokens, 8192);
   assert.equal(config.checkpointScale, 0.1);
-  assert.equal(config.checkpointCap, 32768);
+  assert.equal(config.checkpointCap, 65536);
   assert.equal(config.textTokens, 512);
   assert.equal(config.userTextTokens, 1024);
   assert.equal(config.toolCallTokens, 128);

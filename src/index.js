@@ -32,7 +32,7 @@ const DEFAULT_MAX_TOKENS = 8192;
 /** Default scaled-cap fraction of the shadowed token count. */
 const DEFAULT_CHECKPOINT_SCALE = 0.1;
 /** Default absolute ceiling for the scaled checkpoint cap. */
-const DEFAULT_CHECKPOINT_CAP = 32768;
+const DEFAULT_CHECKPOINT_CAP = 65536;
 /** Default per-block budgets for the compiled view (compiler tokens). */
 const DEFAULT_TEXT_TOKENS = 512;
 const DEFAULT_USER_TEXT_TOKENS = 1024;
